@@ -30,31 +30,6 @@ Understanding how these callbacks are stored makes it possible to enumerate exac
 
 ---
 
-## The EX_FAST_REF Encoding
-
-![EX_FAST_REF pointer encoding](/assets/images/callbacks-exfastref.svg)
-
-Before diving into each callback type, there is one concept that appears everywhere: **EX_FAST_REF**.
-
-The kernel stores callback pointers in an array, but instead of storing a raw pointer it stores an `EX_FAST_REF` — a pointer with the **low 4 bits repurposed as a reference count**. This means every raw slot value you read from a callback array has its lowest nibble set to a small integer, not zero.
-
-To recover the actual pointer to the `_EX_CALLBACK_ROUTINE_BLOCK` structure, mask off the low nibble:
-
-```
-actual_ptr = raw_value & 0xFFFFFFFFFFFFFFF0
-```
-
-The `_EX_CALLBACK_ROUTINE_BLOCK` structure:
-```
-+0x000  RundownProtect   — synchronization guard (0x20 = active)
-+0x008  Function         — the actual callback function pointer
-+0x010  Context          — arbitrary context value passed at registration
-```
-
-The callback function is always at `+0x008`. Once you have the function address, `lm a <address>` resolves which driver registered it.
-
----
-
 # Process Notify Callbacks
 
 Every driver that wants notification of process creation/exit calls `PsSetCreateProcessNotifyRoutineEx`. The kernel stores all registered callbacks in `PspCreateProcessNotifyRoutine` — a **64-slot array** inside `ntoskrnl`. Each slot is an `EX_FAST_REF` pointer as described above.
