@@ -205,3 +205,36 @@ Walk Flink until it equals the head.
 | `poi(addr)` | read pointer at addr |
 
 Offsets (`+0xC8`, `+0x28`, …) are build-specific — confirm with `dt` on the target.
+
+---
+
+## How `callbacks.c` maps to these notes
+
+WinDbg uses **symbols**. The C tool uses **kernel base + RVA** (same addresses, no debugger).
+
+`rva_lookup.exe` is WinDbg `? nt!Symbol - nt` for the three Psp arrays.
+
+| Post | WinDbg | `callbacks.c` |
+|------|--------|----------------|
+| RVA | `? nt!PspCreateProcessNotifyRoutine - nt` | `RVA_PROCESS_CALLBACKS` then `arr = kbase + rva` |
+| RVA | `? nt!PspCreateThreadNotifyRoutine - nt` | `RVA_THREAD_CALLBACKS` |
+| RVA | `? nt!PspLoadImageNotifyRoutine - nt` | `RVA_IMAGELOAD_CALLBACKS` |
+| RVA | `? nt!ObTypeIndexTable - nt` | `RVA_OB_TYPE_INDEX_TABLE` |
+| RVA | `? nt!CallbackListHead - nt` | `RVA_CALLBACK_LIST_HEAD` |
+| Dump slots | `dp nt!Psp…` | `kread64(arr + i*8)` |
+| Decode EX_FAST_REF | `dq (slot & ~0xF)` | `block = slot & ~0xF` |
+| Function `+0x08` | `poi(block+8)` | `kread64(block + 0x08)` |
+| Owner | `lm a <fn>` | `DriverName(fn)` via `EnumDeviceDrivers` |
+| Zero slot | `ep slot 0` | `kzero64(slotAddr)` |
+| Type table | `dp nt!ObTypeIndexTable` | `kread64(kbase + RVA_OB + idx*8)` |
+| Process/Thread | index 7 / 8 | `OB_INDEX_PROCESS` / `OB_INDEX_THREAD` |
+| CallbackList | `+0xC8` | `OB_CALLBACKLIST_OFF` |
+| Active | `eb node+0x14 0` | `kwrite32(node + CEI_ACTIVE_OFF, 0)` |
+| PreOp | `+0x28` | `CEI_PREOPERATION_OFF` |
+| Cm head | `dq nt!CallbackListHead` | `kread64(kbase + RVA_CALLBACK_LIST_HEAD)` |
+| Cm Function | `+0x028` (hex = 40) | `CMREG_FUNCTION_OFF` |
+| Unlink | `eq PREV NEXT` / `eq NEXT+8 PREV` | `kwrite64(prev, next)` / `kwrite64(next+8, prev)` |
+
+WinDbg `kread` = `dp`/`dq`. WinDbg `kwrite` = `ep`/`eb`/`eq`. `kread32`/`kread64` are those, via RTCore64 instead of the debugger.
+
+`list` = dump + decode + owner. `delete` = zero slot / Active=0 / unlink.
