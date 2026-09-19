@@ -164,6 +164,8 @@ _CMREG_CALLBACK
 +0x028  Function          callback  ← lm a this
 ```
 
+`+0x028` is **hex** = **40** decimal. Each pointer is 8 bytes, so QWORD index = `40 / 8` = **5** (0-based; the 6th QWORD, bytes 40–47). Not decimal 28.
+
 Empty: `Flink == CallbackListHead`.
 
 ### Head
