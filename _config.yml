@@ -4,6 +4,8 @@ title: 9Hackers
 description: Offensive Security Research — kernel internals, offensive tooling, malware analysis.
 url: "https://9hackers.com"
 
+permalink: "/:title/"
+
 minima:
   skin: dark
 

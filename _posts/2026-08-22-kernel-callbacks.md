@@ -1,7 +1,7 @@
 ---
 title: "Kernel Callbacks"
 date: 2026-08-22
-categories: [Windows Internals, Kernel]
+categories: [kernel]
 tags: [kernel, callbacks, windbg, livekd, windows, edr]
 summary: WinDbg notes — all five kernel callback cases, every command explained.
 ---

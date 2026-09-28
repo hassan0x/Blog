@@ -80,8 +80,9 @@
               tocList.appendChild(li);
             });
 
+            if (rightToc) rightToc.classList.add('visible');
+
             /* Scroll spy */
-            var links = tocList.querySelectorAll('.toc-link');
             var observer = new IntersectionObserver(function (entries) {
               entries.forEach(function (entry) {
                 var link = tocList.querySelector('a[href="#' + entry.target.id + '"]');
@@ -90,11 +91,7 @@
             }, { rootMargin: '0px 0px -65% 0px', threshold: 0 });
 
             headings.forEach(function (h) { observer.observe(h); });
-          } else {
-            if (rightToc) rightToc.style.display = 'none';
           }
-        } else {
-          if (rightToc) rightToc.style.display = 'none';
         }
 
         /* ── Code blocks: wrap with header bar ──────────────── */

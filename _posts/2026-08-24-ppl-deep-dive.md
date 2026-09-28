@@ -1,7 +1,7 @@
 ---
 title: "Protected Process Light (PPL)"
 date: 2026-08-24
-categories: [Windows Internals, Deep Dive]
+categories: [internals]
 tags: [ppl, protected-process, eprocess, kernel, windbg, defender]
 summary: WinDbg notes — find EPROCESS.Protection and zero it.
 ---

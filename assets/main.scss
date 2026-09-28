@@ -149,6 +149,7 @@ body {
   flex: 1;
   min-width: 0;
   padding: 2.75rem 3rem 6rem 3.5rem;
+  max-width: 780px;
 }
 
 /* ── Right TOC ────────────────────────────────────────────────────────── */
@@ -162,8 +163,10 @@ body {
   max-height: 100vh;
   overflow-y: auto;
   scrollbar-width: none;
+  display: none;
 
   &::-webkit-scrollbar { display: none; }
+  &.visible { display: block; }
 }
 
 .toc-label {
@@ -501,6 +504,16 @@ html body table tbody tr:hover th {
 
 /* ── Home page ────────────────────────────────────────────────────────── */
 
+.home-title {
+  color: var(--text);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0 0 2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
 .post-list {
   list-style: none;
   margin: 0;
@@ -570,8 +583,8 @@ html body table tbody tr:hover th {
 /* ── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 1150px) {
-  .right-toc { display: none; }
-  .content-col { padding-right: 3rem; }
+  .right-toc.visible { display: none; }
+  .content-col { padding-right: 3rem; max-width: 100%; }
 }
 
 @media (max-width: 900px) {
