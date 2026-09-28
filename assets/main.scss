@@ -428,11 +428,12 @@ body {
 /* ── Table scroll wrapper ─────────────────────────────────────────────── */
 
 .table-wrap {
-  overflow-x: auto;
   margin: 1.25rem 0 1.75rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: hidden;
+  background: #1a1b1d;
+  overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
