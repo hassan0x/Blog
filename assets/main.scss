@@ -436,19 +436,36 @@ body {
   }
 
   tr                    { background: transparent !important; }
-  tr:nth-child(even)    { background: transparent !important; }
-  tr:nth-child(odd)     { background: transparent !important; }
-  tr:last-child td      { border-bottom: none !important; }
-  tbody tr:hover        { background: var(--bg-raised) !important; }
-  tbody tr:hover td     { background: transparent !important; }
+  tr:last-child td { border-bottom: none !important; }
 }
 
-/* ── Global table row reset (override minima striping) ───────────────── */
+/* ── Nuclear table reset — override every minima/browser table rule ───── */
 
-table tr,
-table tr:nth-child(even),
-table tr:nth-child(odd) {
+html body table,
+html body table thead,
+html body table tbody,
+html body table tfoot {
   background-color: transparent !important;
+  background: transparent !important;
+}
+
+html body table tr,
+html body table tr:first-child,
+html body table tr:last-child,
+html body table tr:nth-child(n),
+html body table tr:nth-child(even),
+html body table tr:nth-child(odd),
+html body table thead tr,
+html body table tbody tr {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+html body table tbody tr:hover,
+html body table tbody tr:hover td,
+html body table tbody tr:hover th {
+  background-color: var(--bg-raised) !important;
+  background: var(--bg-raised) !important;
 }
 
 /* ── Prev / Next navigation ───────────────────────────────────────────── */
