@@ -418,11 +418,10 @@ body {
     padding: 0.6rem 1rem !important;
     vertical-align: top;
     background: transparent !important;
-    word-break: break-word;
     code {
       font-size: 0.76rem !important;
       white-space: normal !important;
-      word-break: break-word;
+      word-break: break-all;
     }
   }
 
