@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: 'en' }}">
+  {%- include head.html -%}
+  <body>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <a href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+      </div>
+      <nav class="sidebar-nav">
+        <p class="sidebar-section">Posts</p>
+        {%- for post in site.posts -%}
+          <a href="{{ post.url | relative_url }}"
+             class="sidebar-link{% if page.url == post.url %} active{% endif %}">
+            {{ post.title | escape }}
+          </a>
+        {%- endfor -%}
+      </nav>
+    </aside>
+
+    <div class="main-wrap">
+      <div class="content-wrap">
+        {{ content }}
+      </div>
+    </div>
+
+    <button class="sidebar-toggle"
+            aria-label="Toggle sidebar"
+            onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <rect y="2"  width="16" height="1.5" rx="0.75"/>
+        <rect y="7"  width="16" height="1.5" rx="0.75"/>
+        <rect y="12" width="16" height="1.5" rx="0.75"/>
+      </svg>
+    </button>
+
+  </body>
+</html>
