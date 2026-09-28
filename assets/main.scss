@@ -587,22 +587,6 @@ html body table tbody tr:hover th {
   flex-wrap: wrap;
 }
 
-.post-tags {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.post-tag {
-  background: var(--bg-hover);
-  border: 1px solid var(--border-sub);
-  color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.63rem;
-  padding: 0.1em 0.55em;
-  border-radius: 4px;
-  letter-spacing: 0.02em;
-}
 
 /* ── Mobile toggle ────────────────────────────────────────────────────── */
 
