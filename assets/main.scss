@@ -390,14 +390,12 @@ body {
   table {
     border-collapse: collapse !important;
     width: 100% !important;
-    margin: 1.25rem 0 1.75rem !important;
+    margin: 0 !important;
     font-size: 0.855rem !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
-    display: block !important;
-    overflow-x: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    display: table !important;
     background: #1a1b1d !important;
-    -webkit-overflow-scrolling: touch;
   }
 
   th {
@@ -419,12 +417,23 @@ body {
     color: var(--text-body) !important;
     padding: 0.6rem 1rem !important;
     vertical-align: top;
-    background: #1a1b1d !important;
+    background: transparent !important;
     code { font-size: 0.76rem !important; }
   }
 
-  tr                    { background: #1a1b1d !important; }
+  tr { background: transparent !important; }
   tr:last-child td { border-bottom: none !important; }
+}
+
+/* ── Table scroll wrapper ─────────────────────────────────────────────── */
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 1.25rem 0 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Nuclear table reset — override every minima/browser table rule ───── */
@@ -445,15 +454,14 @@ html body table tr:nth-child(even),
 html body table tr:nth-child(odd),
 html body table thead tr,
 html body table tbody tr {
-  background-color: #1a1b1d !important;
-  background: #1a1b1d !important;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
-html body table tbody tr:hover,
 html body table tbody tr:hover td,
 html body table tbody tr:hover th {
-  background-color: #1e2022 !important;
-  background: #1e2022 !important;
+  background-color: #222426 !important;
+  background: #222426 !important;
 }
 
 /* ── Prev / Next navigation ───────────────────────────────────────────── */
