@@ -14,10 +14,7 @@
         {%- for post in site.posts -%}
           <a href="{{ post.url | relative_url }}"
              class="sidebar-link{% if page.url == post.url %} active{% endif %}">
-            <svg class="sidebar-icon" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v9a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5v-9zM4 5a.5.5 0 000 1h8a.5.5 0 000-1H4zm0 2.5a.5.5 0 000 1h8a.5.5 0 000-1H4zM4 10a.5.5 0 000 1h5a.5.5 0 000-1H4z"/>
-            </svg>
-            <span>{{ post.title | escape }}</span>
+            {{ post.title | escape }}
           </a>
         {%- endfor -%}
       </nav>
@@ -100,23 +97,33 @@
           if (rightToc) rightToc.style.display = 'none';
         }
 
-        /* ── Copy buttons ────────────────────────────────────── */
+        /* ── Code blocks: wrap with header bar ──────────────── */
         document.querySelectorAll('pre').forEach(function (pre) {
-          /* language label */
           var code = pre.querySelector('code');
+          var lang = '';
           if (code) {
             var m = code.className.match(/language-(\w+)/);
-            if (m && m[1] !== 'text' && m[1] !== 'plaintext') {
-              var lbl = document.createElement('span');
-              lbl.className   = 'code-lang';
-              lbl.textContent = m[1];
-              pre.appendChild(lbl);
-            }
+            if (m && m[1] !== 'text' && m[1] !== 'plaintext') lang = m[1];
           }
-          /* copy button */
+
+          var wrapper = document.createElement('div');
+          wrapper.className = 'code-block';
+          pre.parentNode.insertBefore(wrapper, pre);
+          wrapper.appendChild(pre);
+
+          var header = document.createElement('div');
+          header.className = 'code-header';
+          wrapper.insertBefore(header, pre);
+
+          var langEl = document.createElement('span');
+          langEl.className = 'code-lang';
+          langEl.textContent = lang;
+          header.appendChild(langEl);
+
           var btn = document.createElement('button');
           btn.textContent = 'Copy';
-          btn.className   = 'copy-btn';
+          btn.className = 'copy-btn';
+          btn.setAttribute('type', 'button');
           btn.addEventListener('click', function () {
             var text = code ? code.textContent : pre.textContent;
             navigator.clipboard.writeText(text).then(function () {
@@ -128,7 +135,7 @@
               }, 2000);
             });
           });
-          pre.appendChild(btn);
+          header.appendChild(btn);
         });
 
       });

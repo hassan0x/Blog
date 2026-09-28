@@ -106,41 +106,26 @@ body {
 }
 
 .sidebar-link {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
+  display: block;
   padding: 0.42rem 0.75rem;
   margin: 0.06rem 0.65rem;
   color: var(--muted) !important;
   font-size: 0.82rem;
   line-height: 1.5;
   text-decoration: none !important;
-  border-left: none;
   border-radius: 6px;
   transition: color 0.12s, background-color 0.12s;
-
-  .sidebar-icon {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    margin-top: 0.18rem;
-    opacity: 0.45;
-  }
 
   &:hover {
     color: var(--text) !important;
     background: rgba(255,255,255,0.05);
     text-decoration: none !important;
-
-    .sidebar-icon { opacity: 0.7; }
   }
 
   &.active {
     color: var(--link) !important;
-    background: rgba(75,124,243,0.15);
+    background: rgba(75,124,243,0.12);
     font-weight: 500;
-
-    .sidebar-icon { opacity: 1; }
   }
 }
 
@@ -329,14 +314,13 @@ body {
   /* ── Code blocks ──────────────────────────────────────────────────── */
 
   pre {
-    position: relative;
     background: var(--code-bg) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    padding: 1.2rem 1.35rem !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 1.15rem 1.35rem !important;
     overflow-x: auto !important;
-    margin: 1rem 0 1.75rem !important;
-    line-height: 1.7 !important;
+    margin: 0 !important;
+    line-height: 1.72 !important;
 
     code {
       font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace !important;
@@ -347,43 +331,6 @@ body {
       padding: 0 !important;
       border-radius: 0 !important;
     }
-
-    /* language label */
-    .code-lang {
-      position: absolute;
-      bottom: 0.65rem;
-      left: 1.1rem;
-      color: var(--muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.67rem;
-      letter-spacing: 0.04em;
-      text-transform: lowercase;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    /* copy button */
-    .copy-btn {
-      position: absolute;
-      top: 0.65rem;
-      right: 0.75rem;
-      background: var(--bg-hover);
-      border: 1px solid var(--border-sub);
-      color: var(--muted);
-      border-radius: 5px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 500;
-      padding: 0.22em 0.65em;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.15s, color 0.12s;
-      letter-spacing: 0.01em;
-
-      &.copied { color: var(--green); border-color: var(--green); }
-    }
-
-    &:hover .copy-btn { opacity: 1; }
   }
 
   /* ── Blockquote ───────────────────────────────────────────────────── */
@@ -466,6 +413,51 @@ html body table tbody tr:hover td,
 html body table tbody tr:hover th {
   background-color: var(--bg-raised) !important;
   background: var(--bg-raised) !important;
+}
+
+/* ── Code block wrapper (GitBook style) ──────────────────────────────── */
+
+.code-block {
+  margin: 1rem 0 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.48rem 1rem;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  min-height: 2.1rem;
+}
+
+.code-lang {
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  user-select: none;
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border-sub);
+  color: var(--muted);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.69rem;
+  font-weight: 500;
+  padding: 0.2em 0.65em;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+  letter-spacing: 0.01em;
+
+  &:hover { color: var(--text); border-color: var(--muted); }
+  &.copied { color: var(--green); border-color: var(--green); }
 }
 
 /* ── Prev / Next navigation ───────────────────────────────────────────── */
