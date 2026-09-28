@@ -440,6 +440,21 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-sub) transparent;
+
+  &::-webkit-scrollbar {
+    height: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-sub);
+    border-radius: 99px;
+    &:hover { background: var(--muted); }
+  }
 }
 
 /* ── Nuclear table reset — override every minima/browser table rule ───── */
