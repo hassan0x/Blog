@@ -2,107 +2,140 @@
 title: "Kernel Callbacks — How EDRs See Every Process, Thread, and Image"
 date: 2026-08-22
 categories: [Windows Internals, Kernel]
-tags: [kernel, callbacks, windbg, windows, edr]
-summary: WinDbg notes — enumerate and disable kernel callbacks.
+tags: [kernel, callbacks, windbg, livekd, windows, edr]
+summary: LiveKd notes — all five kernel callback cases, every command explained.
 ---
 
-# Kernel callback notes (WinDbg)
+# Kernel Callbacks
 
-Drivers register for system events. Defender (`WdFilter.sys`) typically uses all five.
+Drivers register for system events. Defender (`WdFilter.sys`) typically uses all five:
 
-| API | Array / list | Event |
-|-----|----------------|-------|
-| `PsSetCreateProcessNotifyRoutineEx` | `PspCreateProcessNotifyRoutine` | process create/exit |
-| `PsSetCreateThreadNotifyRoutineEx` | `PspCreateThreadNotifyRoutine` | thread create/exit |
-| `PsSetLoadImageNotifyRoutineEx` | `PspLoadImageNotifyRoutine` | EXE/DLL map |
-| `ObRegisterCallbacks` | `_OBJECT_TYPE.CallbackList` | handle open on Process/Thread |
-| `CmRegisterCallbackEx` | `CallbackListHead` | registry |
+| # | API | Symbol | Event |
+|---|-----|--------|-------|
+| 1 | `PsSetCreateProcessNotifyRoutine(Ex)` | `PspCreateProcessNotifyRoutine` | process create/exit |
+| 2 | `PsSetCreateThreadNotifyRoutine(Ex)` | `PspCreateThreadNotifyRoutine` | thread create/exit |
+| 3 | `PsSetLoadImageNotifyRoutine(Ex)` | `PspLoadImageNotifyRoutine` | EXE/DLL/driver map |
+| 4 | `ObRegisterCallbacks` | `_OBJECT_TYPE.CallbackList` | handle open on Process/Thread |
+| 5 | `CmRegisterCallbackEx` | `CallbackListHead` | registry |
 
-`.reload /f` first if names do not resolve. LiveKD is read-only — `ep` / `eb` / `eq` need a writable kernel debug session.
+Cases 1–3: same shape (fixed 64-slot array). Cases 4–5: linked lists with different removal mechanics.
 
-**EX_FAST_REF (notify arrays only):** slot is pointer + refcount in the low 4 bits.
+---
 
+## Setup
+
+```text
+setx _NT_SYMBOL_PATH "srv*C:\Symbols*https://msdl.microsoft.com/download/symbols"
 ```
-block    = slot & 0xFFFFFFFFFFFFFFF0
-function = *(block + 0x08)
-```
+One-time. Caches symbols at `C:\Symbols`.
 
-Same block for process, thread, and image notify:
+```text
+livekd64.exe -w
+```
+`-w` = write mode. Without it, `ep`/`eb`/`eq` (removal steps) will fail.
+
+```text
+.reload /f
+```
+Force-load symbols. Run first if any `nt!...` name fails to resolve.
+
+```text
+lm m nt
+```
+Show the `ntoskrnl` module line — confirms symbols resolved.
+
+```text
+? nt
+```
+Prints the kernel base address. Note it down; all live addresses sit near it.
+
+---
+
+## Shared concept: EX_FAST_REF (Cases 1–3)
+
+Each array slot is a pointer with a refcount packed into the low 4 bits. Strip it before reading the block.
 
 ```
 _EX_CALLBACK_ROUTINE_BLOCK
 +0x000  RundownProtect    sync (0x20 = active)
-+0x008  Function          callback pointer  ← lm a this
++0x008  Function          callback pointer
 +0x010  Context           value from registration
 ```
 
-![types](/assets/images/callbacks-types-overview.svg)
+To decode a slot value:
+```text
+block    = slot & 0xFFFFFFFFFFFFFFF0
+function = *(block + 0x08)
+```
 
 ---
 
-## 1. Process / thread / image notify
+## Case 1 — Process create
 
-64-slot arrays. Same steps; only the symbol changes.
-
-### Dump
-
+```text
+dp nt!PspCreateProcessNotifyRoutine L40
 ```
-dp nt!PspCreateProcessNotifyRoutine
-dp nt!PspCreateThreadNotifyRoutine
-dp nt!PspLoadImageNotifyRoutine
+Dump all 64 slots (`L40` = hex 0x40). Non-zero = occupied. Copy the left-column base address.
+
+```text
+dq (<raw_slot_value> & 0xfffffffffffffff0) L2
 ```
+Strip EX_FAST_REF nibble → points to `_EX_CALLBACK_ROUTINE_BLOCK`. `L2` shows `+0x000` and `+0x008 Function`. Copy the Function value.
 
-`dp` = dump pointers. Non-zero = used slot. Zeros = empty. Save **array base** (left column of the first line). Slot `i` is at `base + i*8`.
-
-### Decode one slot
-
-```
-dq (<raw_slot> & 0xfffffffffffffff0)
-```
-
-Mask low nibble → `_EX_CALLBACK_ROUTINE_BLOCK`. `+0x08` = function.
-
-### Owner
-
-```
+```text
 lm a <function>
 ```
+Which module owns that address — identifies the driver that registered (e.g. `WdFilter.sys`).
 
-Which driver contains that address.
-
-### RVA (for tools)
-
-```
+```text
 ? nt!PspCreateProcessNotifyRoutine - nt
-? nt!PspCreateThreadNotifyRoutine  - nt
-? nt!PspLoadImageNotifyRoutine     - nt
 ```
+RVA of the array symbol — stable per build, changes per boot due to KASLR.
 
-KASLR moves the base; RVA stays for that build.
-
-### Zero a slot
-
+```text
+ep <array_base + slot*8> 0
 ```
-ep <array_base + index*8> 0
+`ep` = write 8 bytes (pointer). Zeroing a slot unregisters the callback; the kernel skips NULL slots.
+
+**Walk all used slots in one command:**
+```text
+.for (r $t0 = 0; @$t0 < 64; r $t0 = @$t0 + 1) { r $t1 = poi(nt!PspCreateProcessNotifyRoutine + (@$t0 * 8)); .if (@$t1 != 0) { r $t2 = poi((@$t1 & 0xfffffffffffffff0) + 8); .printf "Slot %d: fn=%p  ", @$t0, @$t2; lm a @$t2 } }
 ```
-
-Kernel skips NULL slots.
-
-### All used slots (first 14)
-
-```
-.for (r $t0 = 0; @$t0 < 14; r $t0 = @$t0 + 1) { r $t1 = poi(nt!PspCreateProcessNotifyRoutine + (@$t0 * 8)); .if (@$t1 != 0) { r $t2 = poi((@$t1 & 0xfffffffffffffff0) + 8); .printf "Slot %d: fn=%p\n", @$t0, @$t2; lm a @$t2 } }
-```
-
-Swap the symbol for thread/image.
-
-![array chain](/assets/images/callbacks-array-chain.svg)
+`$t0` = slot index, `$t1` = raw slot value, `$t2` = decoded function. Prints only used slots with owner.
 
 ---
 
-## 2. ObRegisterCallbacks (handles)
+## Case 2 — Thread create
 
-Linked list on Process (index 7) and Thread (index 8). Disable via **Active**, do not unlink.
+Identical to Case 1. Only the symbol changes.
+
+```text
+dp nt!PspCreateThreadNotifyRoutine L40
+dq (<raw_slot_value> & 0xfffffffffffffff0) L2
+lm a <function>
+? nt!PspCreateThreadNotifyRoutine - nt
+ep <array_base + slot*8> 0
+```
+
+---
+
+## Case 3 — Image load
+
+Identical to Case 1. Fires for every image map: EXE launch, DLL load, and kernel driver loads.
+
+```text
+dp nt!PspLoadImageNotifyRoutine L40
+dq (<raw_slot_value> & 0xfffffffffffffff0) L2
+lm a <function>
+? nt!PspLoadImageNotifyRoutine - nt
+ep <array_base + slot*8> 0
+```
+
+---
+
+## Case 4 — Handle callbacks (`ObRegisterCallbacks`)
+
+Linked list on the Process/Thread object types. **Do not unlink** — disable via the `Active` flag instead; the kernel frees these entries itself and expects the list intact.
 
 ```
 _OBJECT_TYPE
@@ -111,97 +144,97 @@ _OBJECT_TYPE
 CALLBACK_ENTRY_ITEM
 +0x000  Flink / Blink
 +0x010  Operations        1=create, 2=dup, 3=both
-+0x014  Active            1=on, 0=off  ← eb this
-+0x028  PreOperation      callback  ← lm a this
++0x014  Active            1=on, 0=off
++0x028  PreOperation      callback pointer
 +0x030  PostOperation     or NULL
 ```
 
 Empty list: `Flink == type_addr + 0xC8`.
 
-### Type objects
-
+```text
+dp nt!ObTypeIndexTable L10
 ```
-dp nt!ObTypeIndexTable
+Dumps 16 type-object pointers. Index `[7]` = Process type, `[8]` = Thread type (stable on x64 Win10 — verify on target).
+
+```text
+dt nt!_OBJECT_TYPE <type_addr> CallbackList
 ```
+Shows the `CallbackList` head at `+0x0C8`. If `Flink == type_addr+0xC8` → nothing registered. Otherwise `Flink` is the first node.
 
-`[7]` Process, `[8]` Thread.
-
-### List empty?
-
-```
-dt nt!_OBJECT_TYPE <type_addr>
-```
-
-Look at `+0xC8 CallbackList`. Flink ≠ head → first node is that Flink.
-
-### Dump node
-
-```
+```text
 dq <node> L7
+```
+Seven QWORDs = bytes `+0x00..+0x37`. Reveals: Flink (`+0x00`), Blink (`+0x08`), Operations (`+0x10`), Active (`+0x14`), PreOperation (`+0x28`), PostOperation (`+0x30`). Copy Flink (next node) and PreOperation.
+
+```text
 lm a <PreOperation>
 ```
+Identifies the driver owning this callback.
 
-### Disable
-
-```
+```text
 eb (<node> + 0x14) 0
 ```
+`eb` = write one byte. Sets `Active` to 0 — kernel checks this before calling PreOperation. Write `1` to re-enable.
 
-Kernel checks `Active` before `PreOperation`. Walk Flink until it equals `type_addr + 0xC8`.
-
-![ob list](/assets/images/callbacks-ob-linked-list.svg)
+```text
+db <node>+0x14 L1
+```
+Verify the byte read back as `00`. Then follow Flink to the next node. Stop when `Flink == type_addr+0xC8`.
 
 ---
 
-## 3. Registry (`CmRegisterCallbackEx`)
+## Case 5 — Registry (`CmRegisterCallbackEx`)
 
-List at `CallbackListHead`. **No Active field** — unlink the node.
+List anchored at `CallbackListHead`. No `Active` field — removal requires a real unlink.
 
 ```
 _CMREG_CALLBACK
 +0x000  Flink
 +0x008  Blink
-+0x028  Function          callback  ← lm a this
++0x028  Function          callback pointer
 ```
+`+0x028` is hex = 40 decimal = QWORD index 5 (0-based).
 
-`+0x028` is **hex** = **40** decimal. Each pointer is 8 bytes, so QWORD index = `40 / 8` = **5** (0-based; the 6th QWORD, bytes 40–47). Not decimal 28.
-
-Empty: `Flink == CallbackListHead`.
-
-### Head
-
+```text
+dq nt!CallbackListHead L2
 ```
-dq nt!CallbackListHead
-```
+`+0x000 Flink` = first node, `+0x008 Blink` = last node. If `Flink == head address` → nothing registered. Copy Flink as the first node.
 
-### Node + owner
-
+```text
+dq <node> L6
 ```
-dq <node>
+**Must use `L6`** — default range stops before `+0x28`, missing the Function field. Six QWORDs reach it.
+
+```text
 lm a <function>
 ```
+Identifies the driver owning this callback.
 
-### Unlink
-
+**Unlink (two pointer fix-ups):**
+```text
+eq <PREV_Flink_addr>  <NEXT>
+eq (<NEXT> + 0x08)    <PREV_Flink_addr>
 ```
-eq <PREV>            <NEXT>
-eq (<NEXT> + 0x08)   <PREV>
+`PREV_Flink_addr` = the address you read the previous Flink FROM (not the node itself). For the first node, PREV is `nt!CallbackListHead`. Stop when `Flink == head address`.
+
+```text
+dq <PREV_Flink_addr> L1
 ```
-
-Walk Flink until it equals the head.
-
-![cm unlink](/assets/images/callbacks-cm-unlink.svg)
+Verify it now skips the removed node. Continue from `NEXT`.
 
 ---
 
-## Commands
+## Commands reference
 
 | Cmd | Does |
 |-----|------|
-| `dp` / `dq` | dump pointers / QWORDs |
-| `ep` / `eb` / `eq` | edit pointer / byte / QWORD |
-| `dt` | dump typed struct |
-| `lm a` | module containing address |
-| `poi(addr)` | read pointer at addr |
+| `dp` / `dq` / `db` | dump pointers / QWORDs / bytes (`L<n>` = item count, hex) |
+| `ep` / `eq` / `eb` | write pointer / QWORD / byte |
+| `dt type addr field` | dump one struct field at address |
+| `lm a <addr>` | module containing address |
+| `poi(addr)` | dereference pointer at addr |
+| `? expr` | evaluate expression (RVA math, kernel base) |
+| `.for` / `.if` / `.printf` / `r $t0` | pseudo-registers + script loop |
+| `.reload /f` | force symbol load |
 
-Offsets (`+0xC8`, `+0x28`, …) are build-specific — confirm with `dt` on the target.
+Offsets are build-specific — always confirm with `dt` on the target.
