@@ -8,19 +8,19 @@
 /* ── Tokens — GitBook dark theme (exact) ─────────────────────────────── */
 
 :root {
-  --bg:         #1c1e2c;   /* page / content background */
-  --bg-sidebar: #141620;   /* sidebar panel */
-  --bg-raised:  #252840;   /* elevated surfaces, table headers */
-  --bg-hover:   #2a2d48;   /* hover backgrounds */
-  --border:     #2e3252;   /* main dividers */
-  --border-sub: #383d5e;   /* subtle borders */
-  --text:       #e4e7f0;   /* headings, strong */
-  --text-body:  #bdc5d6;   /* body copy */
-  --muted:      #8b97b2;   /* timestamps, labels, TOC */
-  --link:       #4b7cf3;   /* GitBook signature blue */
-  --link-hov:   #7098ff;
-  --code-bg:    #111218;   /* code block background */
-  --code-fg:    #7aa0ff;   /* inline code text */
+  --bg:         #1e1f21;   /* page / content background */
+  --bg-sidebar: #161719;   /* sidebar panel */
+  --bg-raised:  #252729;   /* elevated surfaces, table headers */
+  --bg-hover:   #2c2e31;   /* hover backgrounds */
+  --border:     #2e3035;   /* main dividers */
+  --border-sub: #3a3d43;   /* subtle borders */
+  --text:       #e6e8ea;   /* headings, strong */
+  --text-body:  #b4b9c4;   /* body copy */
+  --muted:      #737b8a;   /* timestamps, labels, TOC */
+  --link:       #5b8dee;   /* links */
+  --link-hov:   #7da8f5;
+  --code-bg:    #141516;   /* code block background */
+  --code-fg:    #6e9de8;   /* inline code text */
   --green:      #3bba6c;
   --sidebar-w:  252px;
   --toc-w:      200px;
@@ -314,23 +314,58 @@ body {
   /* ── Code blocks ──────────────────────────────────────────────────── */
 
   pre {
+    position: relative;
     background: var(--code-bg) !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 1.15rem 1.35rem !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    padding: 1.15rem 1.35rem 1.9rem !important;
     overflow-x: auto !important;
-    margin: 0 !important;
+    margin: 1rem 0 1.75rem !important;
     line-height: 1.72 !important;
 
     code {
       font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace !important;
       font-size: 0.79rem !important;
       background: transparent !important;
-      color: #e6edf3 !important;
+      color: #e2e4e8 !important;
       border: none !important;
       padding: 0 !important;
       border-radius: 0 !important;
     }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.7rem;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-sub);
+      color: var(--muted);
+      border-radius: 5px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.69rem;
+      font-weight: 500;
+      padding: 0.22em 0.65em;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.12s;
+
+      &.copied { color: var(--green); border-color: var(--green); }
+    }
+
+    .code-lang {
+      position: absolute;
+      bottom: 0.6rem;
+      left: 1.1rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    &:hover .copy-btn { opacity: 1; }
   }
 
   /* ── Blockquote ───────────────────────────────────────────────────── */
@@ -413,51 +448,6 @@ html body table tbody tr:hover td,
 html body table tbody tr:hover th {
   background-color: var(--bg-raised) !important;
   background: var(--bg-raised) !important;
-}
-
-/* ── Code block wrapper (GitBook style) ──────────────────────────────── */
-
-.code-block {
-  margin: 1rem 0 1.75rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.code-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.48rem 1rem;
-  background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
-  min-height: 2.1rem;
-}
-
-.code-lang {
-  color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: lowercase;
-  user-select: none;
-}
-
-.copy-btn {
-  background: transparent;
-  border: 1px solid var(--border-sub);
-  color: var(--muted);
-  border-radius: 4px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.69rem;
-  font-weight: 500;
-  padding: 0.2em 0.65em;
-  cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
-  letter-spacing: 0.01em;
-
-  &:hover { color: var(--text); border-color: var(--muted); }
-  &.copied { color: var(--green); border-color: var(--green); }
 }
 
 /* ── Prev / Next navigation ───────────────────────────────────────────── */

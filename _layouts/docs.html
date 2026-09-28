@@ -106,20 +106,7 @@
             if (m && m[1] !== 'text' && m[1] !== 'plaintext') lang = m[1];
           }
 
-          var wrapper = document.createElement('div');
-          wrapper.className = 'code-block';
-          pre.parentNode.insertBefore(wrapper, pre);
-          wrapper.appendChild(pre);
-
-          var header = document.createElement('div');
-          header.className = 'code-header';
-          wrapper.insertBefore(header, pre);
-
-          var langEl = document.createElement('span');
-          langEl.className = 'code-lang';
-          langEl.textContent = lang;
-          header.appendChild(langEl);
-
+          /* copy button — inside the code area, top-right on hover */
           var btn = document.createElement('button');
           btn.textContent = 'Copy';
           btn.className = 'copy-btn';
@@ -135,7 +122,15 @@
               }, 2000);
             });
           });
-          header.appendChild(btn);
+          pre.appendChild(btn);
+
+          /* language label — bottom-left inside the code area */
+          if (lang) {
+            var langEl = document.createElement('span');
+            langEl.className = 'code-lang';
+            langEl.textContent = lang;
+            pre.appendChild(langEl);
+          }
         });
 
       });
