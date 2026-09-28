@@ -396,10 +396,11 @@ body {
     border-radius: 8px !important;
     overflow: hidden !important;
     display: table !important;
+    background: var(--code-bg) !important;
   }
 
   th {
-    background: var(--bg-raised) !important;
+    background: #1c1d1f !important;
     color: var(--muted) !important;
     font-size: 0.66rem !important;
     font-weight: 600 !important;
@@ -417,10 +418,11 @@ body {
     color: var(--text-body) !important;
     padding: 0.6rem 1rem !important;
     vertical-align: top;
+    background: var(--code-bg) !important;
     code { font-size: 0.76rem !important; }
   }
 
-  tr                    { background: transparent !important; }
+  tr                    { background: var(--code-bg) !important; }
   tr:last-child td { border-bottom: none !important; }
 }
 
@@ -442,15 +444,15 @@ html body table tr:nth-child(even),
 html body table tr:nth-child(odd),
 html body table thead tr,
 html body table tbody tr {
-  background-color: transparent !important;
-  background: transparent !important;
+  background-color: var(--code-bg) !important;
+  background: var(--code-bg) !important;
 }
 
 html body table tbody tr:hover,
 html body table tbody tr:hover td,
 html body table tbody tr:hover th {
-  background-color: var(--bg-raised) !important;
-  background: var(--bg-raised) !important;
+  background-color: #1e2022 !important;
+  background: #1e2022 !important;
 }
 
 /* ── Prev / Next navigation ───────────────────────────────────────────── */
