@@ -396,11 +396,11 @@ body {
     border-radius: 8px !important;
     overflow: hidden !important;
     display: table !important;
-    background: var(--code-bg) !important;
+    background: #1a1b1d !important;
   }
 
   th {
-    background: #1c1d1f !important;
+    background: #222426 !important;
     color: var(--muted) !important;
     font-size: 0.66rem !important;
     font-weight: 600 !important;
@@ -418,11 +418,11 @@ body {
     color: var(--text-body) !important;
     padding: 0.6rem 1rem !important;
     vertical-align: top;
-    background: var(--code-bg) !important;
+    background: #1a1b1d !important;
     code { font-size: 0.76rem !important; }
   }
 
-  tr                    { background: var(--code-bg) !important; }
+  tr                    { background: #1a1b1d !important; }
   tr:last-child td { border-bottom: none !important; }
 }
 
@@ -444,8 +444,8 @@ html body table tr:nth-child(even),
 html body table tr:nth-child(odd),
 html body table thead tr,
 html body table tbody tr {
-  background-color: var(--code-bg) !important;
-  background: var(--code-bg) !important;
+  background-color: #1a1b1d !important;
+  background: #1a1b1d !important;
 }
 
 html body table tbody tr:hover,
