@@ -6,6 +6,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <a href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+        <span class="brand-tagline">{{ site.description | escape }}</span>
       </div>
       <nav class="sidebar-nav">
         <p class="sidebar-section">Posts</p>
@@ -18,6 +19,8 @@
       </nav>
     </aside>
 
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
     <div class="main-wrap">
       <div class="content-wrap">
         {{ content }}
@@ -26,13 +29,24 @@
 
     <button class="sidebar-toggle"
             aria-label="Toggle sidebar"
-            onclick="document.getElementById('sidebar').classList.toggle('open')">
+            onclick="toggleSidebar()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <rect y="2"  width="16" height="1.5" rx="0.75"/>
         <rect y="7"  width="16" height="1.5" rx="0.75"/>
         <rect y="12" width="16" height="1.5" rx="0.75"/>
       </svg>
     </button>
+
+    <script>
+      function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('visible');
+      }
+      function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('visible');
+      }
+    </script>
 
   </body>
 </html>
