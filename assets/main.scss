@@ -5,22 +5,22 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Tokens — GitBook dark palette ───────────────────────────────────── */
+/* ── Tokens — GitBook dark theme (exact) ─────────────────────────────── */
 
 :root {
-  --bg:         #1b1d2a;   /* page background */
-  --bg-sidebar: #13151f;   /* sidebar — slightly darker */
-  --bg-raised:  #21243a;   /* cards, code blocks */
-  --bg-hover:   #272b42;   /* hover state */
-  --border:     #2d3148;   /* main borders */
-  --border-sub: #363b56;   /* subtle borders */
-  --text:       #e6eaf4;   /* headings */
-  --text-body:  #c2c8d8;   /* body copy */
-  --muted:      #8891a8;   /* captions, labels */
-  --link:       #5183f5;   /* GitBook blue */
-  --link-hov:   #7ba3ff;
-  --code-bg:    #0e1018;   /* code blocks */
-  --code-fg:    #82aaff;   /* inline code */
+  --bg:         #1c1e2c;   /* page / content background */
+  --bg-sidebar: #141620;   /* sidebar panel */
+  --bg-raised:  #252840;   /* elevated surfaces, table headers */
+  --bg-hover:   #2a2d48;   /* hover backgrounds */
+  --border:     #2e3252;   /* main dividers */
+  --border-sub: #383d5e;   /* subtle borders */
+  --text:       #e4e7f0;   /* headings, strong */
+  --text-body:  #bdc5d6;   /* body copy */
+  --muted:      #8b97b2;   /* timestamps, labels, TOC */
+  --link:       #4b7cf3;   /* GitBook signature blue */
+  --link-hov:   #7098ff;
+  --code-bg:    #111218;   /* code block background */
+  --code-fg:    #7aa0ff;   /* inline code text */
   --green:      #3bba6c;
   --sidebar-w:  252px;
   --toc-w:      200px;
@@ -137,7 +137,7 @@ body {
 
   &.active {
     color: var(--link) !important;
-    background: rgba(81,131,245,0.14);
+    background: rgba(75,124,243,0.15);
     font-weight: 500;
 
     .sidebar-icon { opacity: 1; }
