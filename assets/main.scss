@@ -506,33 +506,50 @@ html body table tbody tr:hover th {
 
 /* ── Home page ────────────────────────────────────────────────────────── */
 
+.home-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
 .home-title {
   color: var(--text);
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
-  margin: 0 0 2rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.028em;
+  margin: 0 0 0.5rem;
+}
+
+.home-subtitle {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .post-list {
   list-style: none;
   margin: 0;
   padding: 0;
+}
 
-  li {
-    padding: 1.75rem 0;
-    border-bottom: 1px solid var(--border);
-    &:first-child { padding-top: 0; }
-    &:last-child { border-bottom: none; padding-bottom: 0; }
-  }
+.post-entry {
+  padding: 1.4rem 1rem;
+  margin: 0 -1rem;
+  border-radius: 8px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--bg-raised); }
 }
 
 .post-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: var(--text) !important;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: -0.018em;
   line-height: 1.4;
@@ -540,14 +557,50 @@ html body table tbody tr:hover th {
   margin-bottom: 0.4rem;
   transition: color 0.1s;
 
-  &:hover { color: var(--link) !important; text-decoration: none !important; }
+  .post-arrow {
+    color: var(--muted);
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  &:hover {
+    color: var(--link) !important;
+    text-decoration: none !important;
+    .post-arrow { opacity: 1; transform: translateX(0); color: var(--link); }
+  }
 }
 
 .post-summary {
   color: var(--muted);
-  font-size: 0.87rem;
+  font-size: 0.855rem;
   line-height: 1.6;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.65rem;
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.post-tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.post-tag {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-sub);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.63rem;
+  padding: 0.1em 0.55em;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
 }
 
 /* ── Mobile toggle ────────────────────────────────────────────────────── */

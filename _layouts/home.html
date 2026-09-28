@@ -2,17 +2,32 @@
 layout: docs
 ---
 <div class="home-content">
-  <h1 class="home-title">Posts</h1>
+  <div class="home-header">
+    <h1 class="home-title">Research Notes</h1>
+    <p class="home-subtitle">Windows internals — kernel debugging, EDR evasion, offensive techniques.</p>
+  </div>
   <ul class="post-list">
     {%- for post in site.posts -%}
-    <li>
-      <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+    <li class="post-entry">
+      <a class="post-link" href="{{ post.url | relative_url }}">
+        <span>{{ post.title | escape }}</span>
+        <svg class="post-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
       {%- if post.summary -%}
         <p class="post-summary">{{ post.summary }}</p>
       {%- endif -%}
-      <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}">
-        {{ post.date | date: "%b %-d, %Y" }}
-      </time>
+      <div class="post-meta">
+        <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %-d, %Y" }}</time>
+        {%- if post.tags -%}
+          <div class="post-tags">
+            {%- for tag in post.tags limit:4 -%}
+              <span class="post-tag">{{ tag }}</span>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      </div>
     </li>
     {%- endfor -%}
   </ul>
