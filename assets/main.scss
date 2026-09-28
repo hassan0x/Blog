@@ -335,8 +335,8 @@ body {
 
     .copy-btn {
       position: absolute;
-      bottom: 0.55rem;
-      left: 1.1rem;
+      top: 0.6rem;
+      right: 0.7rem;
       background: var(--bg-raised);
       border: 1px solid var(--border-sub);
       color: var(--muted);
@@ -366,7 +366,6 @@ body {
     }
 
     &:hover .copy-btn { opacity: 1; }
-    &:hover .code-lang { opacity: 0; }
   }
 
   /* ── Blockquote ───────────────────────────────────────────────────── */
