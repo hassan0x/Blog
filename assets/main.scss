@@ -84,10 +84,14 @@ body {
 
   .brand-tagline {
     color: var(--muted);
-    font-size: 0.72rem;
-    margin-top: 0.2rem;
-    line-height: 1.4;
+    font-size: 0.7rem;
+    margin-top: 0.18rem;
+    line-height: 1;
     letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
   }
 }
 
@@ -312,6 +316,8 @@ body {
   }
 
   tr:last-child td { border-bottom: none !important; }
+
+  tr:nth-child(even) td { background: transparent !important; }
 
   tbody tr:hover td {
     background: var(--bg-raised) !important;
