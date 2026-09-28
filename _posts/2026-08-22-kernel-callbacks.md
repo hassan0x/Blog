@@ -1,9 +1,9 @@
 ---
-title: "Kernel Callbacks — How EDRs See Every Process, Thread, and Image"
+title: "Kernel Callbacks"
 date: 2026-08-22
 categories: [Windows Internals, Kernel]
 tags: [kernel, callbacks, windbg, livekd, windows, edr]
-summary: LiveKd notes — all five kernel callback cases, every command explained.
+summary: WinDbg notes — all five kernel callback cases, every command explained.
 ---
 
 # Kernel Callbacks
