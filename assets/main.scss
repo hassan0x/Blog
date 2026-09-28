@@ -389,7 +389,8 @@ body {
 
   table {
     border-collapse: collapse !important;
-    width: 100% !important;
+    width: max-content !important;
+    min-width: 100% !important;
     margin: 0 !important;
     font-size: 0.855rem !important;
     border: none !important;
