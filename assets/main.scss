@@ -391,12 +391,13 @@ body {
     border-collapse: collapse !important;
     width: 100% !important;
     margin: 1.25rem 0 1.75rem !important;
-    font-size: 0.875rem !important;
+    font-size: 0.855rem !important;
     border: 1px solid var(--border) !important;
     border-radius: 8px !important;
-    overflow: hidden !important;
-    display: table !important;
+    display: block !important;
+    overflow-x: auto !important;
     background: #1a1b1d !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   th {
