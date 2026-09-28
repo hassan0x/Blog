@@ -5,22 +5,23 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Tokens ───────────────────────────────────────────────────────────── */
+/* ── Tokens — GitBook dark palette ───────────────────────────────────── */
 
 :root {
-  --bg:         #0d1117;
-  --bg-raised:  #161b22;
-  --bg-hover:   #1c2128;
-  --border:     #21262d;
-  --border-sub: #30363d;
-  --text:       #e6edf3;
-  --text-body:  #c9d1d9;
-  --muted:      #8b949e;
-  --link:       #58a6ff;
-  --link-hov:   #79c0ff;
-  --code-bg:    #161b22;
-  --code-fg:    #79c0ff;
-  --green:      #3fb950;
+  --bg:         #1b1d2a;   /* page background */
+  --bg-sidebar: #13151f;   /* sidebar — slightly darker */
+  --bg-raised:  #21243a;   /* cards, code blocks */
+  --bg-hover:   #272b42;   /* hover state */
+  --border:     #2d3148;   /* main borders */
+  --border-sub: #363b56;   /* subtle borders */
+  --text:       #e6eaf4;   /* headings */
+  --text-body:  #c2c8d8;   /* body copy */
+  --muted:      #8891a8;   /* captions, labels */
+  --link:       #5183f5;   /* GitBook blue */
+  --link-hov:   #7ba3ff;
+  --code-bg:    #0e1018;   /* code blocks */
+  --code-fg:    #82aaff;   /* inline code */
+  --green:      #3bba6c;
   --sidebar-w:  252px;
   --toc-w:      200px;
 }
@@ -51,7 +52,7 @@ body {
   top: 0; left: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: var(--bg-raised);
+  background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -65,6 +66,7 @@ body {
   padding: 1.3rem 1.4rem 1.15rem;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  background: var(--bg-sidebar);
 }
 
 .brand-name {
@@ -107,12 +109,14 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 0.55rem;
-  padding: 0.44rem 1.4rem;
+  padding: 0.42rem 0.75rem;
+  margin: 0.06rem 0.65rem;
   color: var(--muted) !important;
   font-size: 0.82rem;
   line-height: 1.5;
   text-decoration: none !important;
-  border-left: 2px solid transparent;
+  border-left: none;
+  border-radius: 6px;
   transition: color 0.12s, background-color 0.12s;
 
   .sidebar-icon {
@@ -120,21 +124,20 @@ body {
     width: 14px;
     height: 14px;
     margin-top: 0.18rem;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   &:hover {
     color: var(--text) !important;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.05);
     text-decoration: none !important;
 
-    .sidebar-icon { opacity: 0.75; }
+    .sidebar-icon { opacity: 0.7; }
   }
 
   &.active {
     color: var(--link) !important;
-    border-left-color: var(--link);
-    background: rgba(88,166,255,0.08);
+    background: rgba(81,131,245,0.14);
     font-weight: 500;
 
     .sidebar-icon { opacity: 1; }
@@ -147,6 +150,7 @@ body {
   margin-left: var(--sidebar-w);
   min-height: 100vh;
   background: var(--bg);
+  border-left: 1px solid var(--border);
 }
 
 .page-body {
@@ -326,7 +330,7 @@ body {
 
   pre {
     position: relative;
-    background: var(--bg-raised) !important;
+    background: var(--code-bg) !important;
     border: 1px solid var(--border) !important;
     border-radius: 10px !important;
     padding: 1.2rem 1.35rem !important;
@@ -540,7 +544,7 @@ table tr:nth-child(odd) {
   top: 0.9rem;
   left: 0.9rem;
   z-index: 300;
-  background: var(--bg-raised);
+  background: var(--bg-sidebar);
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: 7px;
